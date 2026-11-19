@@ -18,7 +18,9 @@ if [ -f "$VENV_DIR/ENV_OK" ] && [ "$(cat "$VENV_DIR/ENV_OK")" = "$env_ok_content
 fi
 
 echo "setup_env: building venv at $VENV_DIR"
-uv venv "$VENV_DIR"
+# Pinned to 3.11 (pyproject.toml's floor) regardless of the image's system
+# Python, since RunPod base images have shipped 3.12+ as /usr/bin/python3.
+uv venv --python 3.11 "$VENV_DIR"
 # shellcheck disable=SC1091
 source "$VENV_DIR/bin/activate"
 uv pip sync "$LOCK_FILE"
