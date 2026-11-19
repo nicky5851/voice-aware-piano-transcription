@@ -33,8 +33,17 @@ def _disk_free_gb(path: str = "/workspace") -> float | None:
         return None
 
 
+def _cpu_count() -> int | None:
+    # os.cpu_count() reports the host's total CPUs, not a container's
+    # cgroup-limited allocation (seen on RunPod pods); affinity does.
+    try:
+        return len(os.sched_getaffinity(0))
+    except AttributeError:
+        return os.cpu_count()
+
+
 def _cpu_info() -> dict[str, Any]:
-    info: dict[str, Any] = {"count": os.cpu_count(), "model": None}
+    info: dict[str, Any] = {"count": _cpu_count(), "model": None}
     try:
         with open("/proc/cpuinfo") as f:
             for line in f:
