@@ -1,0 +1,26 @@
+Voice-aware piano transcription
+
+This project builds on the following third-party work.
+
+## Piano transcription model and pretrained weights
+
+Kong, Q., Li, B., Song, X., Wan, Y., Wang, Y. "High-Resolution Piano
+Transcription with Pedals by Regressing Onsets and Offsets Times." 2020.
+Code: https://github.com/bytedance/piano_transcription (Apache License 2.0).
+A pinned subset is vendored under `third_party/piano_transcription/`; see
+that directory's own LICENSE and NOTICE for the exact commit and files.
+
+## Datasets
+
+- MAESTRO v2.0.0 (Google Magenta / Google LLC), used under its stated
+  license. See https://magenta.tensorflow.org/datasets/maestro.
+- MUSDB18-HQ, used under its stated license. See
+  https://sigsep.github.io/datasets/musdb.html.
+
+## Pitch extraction
+
+Pitch labels use RMVPE or CREPE (torchcrepe), per the method described in
+`docs/method.md`. Checkpoint provenance and licensing are recorded there.
+
+No other third-party code, weights, or data are included in this
+repository.
