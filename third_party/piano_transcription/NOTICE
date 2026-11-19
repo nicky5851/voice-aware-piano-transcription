@@ -1,0 +1,42 @@
+Vendored from https://github.com/bytedance/piano_transcription
+Pinned commit: 1ade7dcd4348add669a67c6e6282456c8c6633bd
+Files vendored, unmodified:
+  pytorch/models.py
+  pytorch/pytorch_utils.py
+  pytorch/losses.py
+  utils/utilities.py
+  utils/data_generator.py
+  utils/features.py
+  utils/config.py
+  utils/piano_vad.py
+
+License: the upstream repository states "Apache 2.0" in its README
+(## LICENSE section) but does not include a formal LICENSE file at the
+pinned commit. The `LICENSE` file in this directory is the canonical
+Apache License 2.0 text, added here because the upstream repository
+omits it, to properly license the vendored code per its own stated terms.
+
+Copyright: Qiuqiang Kong (contact: kongqiuqiang@bytedance.com, per the
+upstream README's Contact section).
+
+Original paper: Q. Kong, B. Li, X. Song, Y. Wan, Y. Wang, "High-resolution
+Piano Transcription with Pedals by Regressing Onset and Offset Times,"
+IEEE/ACM TASLP 29, 2021. arXiv:2010.01815
+
+No changes have been made to these files. If a future commit must modify
+one of them (for example, to fix an import path for this repository's
+layout), that change goes in a separate commit, and the change is listed
+here.
+
+The upstream repository's own import style is bare, unqualified imports
+(e.g. `from pytorch_utils import ...`) that assume both `pytorch/` and
+`utils/` are added to `sys.path` at run time, rather than Python package
+imports. This repository's wrapper code in `src/vapt/` is responsible for
+that path setup; the vendored files themselves are untouched.
+
+Pretrained checkpoint: the upstream repository does not publish a direct
+checkpoint URL or hash in its README; it instead depends on the separate
+`piano_transcription_inference` PyPI package, which downloads the
+checkpoint at runtime. The checkpoint's provenance, URL and sha256 used by
+this project are recorded separately in `docs/reproducibility.md` once
+established.
