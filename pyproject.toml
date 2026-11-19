@@ -1,0 +1,38 @@
+[project]
+name = "vapt"
+version = "0.1.0"
+description = "Voice-aware piano transcription"
+requires-python = ">=3.10,<3.12"
+dependencies = [
+    "torch",
+    "torchlibrosa",
+    "librosa",
+    "soxr",
+    "h5py",
+    "pretty_midi",
+    "mido",
+    "mir_eval",
+    "pyloudnorm",
+    "torchcrepe",
+    "numpy",
+    "scipy",
+    "pandas",
+    "matplotlib",
+    "pyyaml",
+    "scikit-learn",
+    "piano_transcription_inference",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.pytest.ini_options]
+markers = ["gpu: requires a CUDA GPU"]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
