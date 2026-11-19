@@ -1,0 +1,14 @@
+/data/
+/work/
+*.pth
+*.pt
+*.h5
+*.wav
+*.flac
+*.mid
+*.midi
+*.npz
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
