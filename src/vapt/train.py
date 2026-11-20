@@ -420,8 +420,15 @@ def run_training(
     best_metric = -float("inf")
     last_heartbeat = 0.0
 
+    if device.type == "cuda":
+        torch.cuda.reset_peak_memory_stats(device)
+
+    loader_iter = iter(loader)
     try:
-        for step, batch in zip(range(start_step, cfg.steps), loader):
+        for step in range(start_step, cfg.steps):
+            data_t0 = time.time()
+            batch = next(loader_iter)
+            data_wait_s = time.time() - data_t0
             step_t0 = time.time()
 
             if step < 200:
@@ -454,6 +461,8 @@ def run_training(
                     "losses": {k: float(v.detach()) for k, v in losses.items()},
                     "grad_norms": result["grad_norms"],
                     "s_per_step": now - step_t0,
+                    "data_wait_s": data_wait_s,
+                    "gpu_mem_mb": torch.cuda.max_memory_allocated(device) / 1e6 if device.type == "cuda" else None,
                 }
                 with open(metrics_path, "a") as f:
                     f.write(json.dumps(log) + "\n")
