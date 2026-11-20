@@ -184,15 +184,29 @@ def grad_norms_by_submodule(model: torch.nn.Module) -> dict[str, float]:
 
 
 def training_step(
-    model: VoiceAwareKong, batch: dict, lam: float, pos_weight: float, optimizer: torch.optim.Optimizer, device: torch.device
+    model: VoiceAwareKong,
+    batch: dict,
+    lam: float,
+    pos_weight: float,
+    optimizer: torch.optim.Optimizer,
+    device: torch.device,
+    autocast_bf16: bool = False,
 ) -> dict:
+    """autocast_bf16=True wraps the forward+loss in torch.autocast(dtype=bfloat16), keeping
+    the loss itself in fp32 (protocol SS7's bf16 precision mode, spec WP3 SS3 step 3)."""
     waveform = batch["waveform"].to(device)
     voice_roll = batch["voice_roll"].to(device)
     target = {k: batch[k].to(device) for k in TARGET_KEYS}
 
     optimizer.zero_grad(set_to_none=True)
-    out = model(waveform, lam=lam)
-    losses = total_loss(out, target, voice_roll, pos_weight=pos_weight)
+    if autocast_bf16:
+        with torch.autocast(device_type=device.type, dtype=torch.bfloat16):
+            out = model(waveform, lam=lam)
+            losses = total_loss(out, target, voice_roll, pos_weight=pos_weight)
+        losses = {k: v.float() for k, v in losses.items()}
+    else:
+        out = model(waveform, lam=lam)
+        losses = total_loss(out, target, voice_roll, pos_weight=pos_weight)
     losses["total"].backward()
     grad_norms = grad_norms_by_submodule(model)
     return {"losses": losses, "grad_norms": grad_norms}
@@ -435,7 +449,10 @@ def run_training(
                 with open(batch_hashes_path, "a") as f:
                     f.write(json.dumps({"step": step, "hash": batch_waveform_hash(batch["waveform"])}) + "\n")
 
-            result = training_step(model, batch, cfg.lam, pos_weight, optimizer, device)
+            result = training_step(
+                model, batch, cfg.lam, pos_weight, optimizer, device,
+                autocast_bf16=cfg.hardware.get("precision") == "bf16",
+            )
             losses = result["losses"]
 
             if not torch.isfinite(losses["total"]):
