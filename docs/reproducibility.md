@@ -67,6 +67,28 @@ CREPE per the decision procedure in `docs/protocol.md` §6.1.
   `_acoustic_model_forward_inplace_false` monkeypatch and the corresponding
   change in `AcousticModelWithFeatures.forward`.
 
+## Exact reproduction and sanity checks (spec WP3 §5)
+
+Run on an NVIDIA A100 80GB PCIe pod, current library versions (no pinning
+needed -- see below), checkpoint `note_F1=0.9677_pedal_F1=0.9186.pth` from
+Kong et al.'s Zenodo release (record 4034264):
+
+- **Exact reproduction** (§5.1): on one MAESTRO validation-split 10s window,
+  the vendored model's frame-probability roll matched the
+  `piano_transcription_inference` pip package's own output at **max abs
+  difference 0.0** (well under the 1e-4 threshold). Current `librosa`/
+  `torchlibrosa` versions reproduce Kong's released weights exactly; no
+  version pinning was needed.
+- **Piano path unchanged** (§5.2): `VoiceAwareKong`'s piano outputs
+  (`frame_output`, `reg_onset_output`, `reg_offset_output`,
+  `velocity_output`) equalled the vendored parent class's outputs at
+  **max abs difference 0.0** for every λ ∈ {0, 0.5, 1} (eval mode).
+- **Validation sanity** (§5.3): the pretrained model's clean-condition onset
+  F1 on the validation manifest (75 clean items) was **mean 95.67, min
+  81.13** -- well above the 85 threshold.
+
+See `tests/test_reproduction.py` (pytest marker `gpu`) for the exact checks.
+
 ## Environment
 
 See `docs/compute.md` for the base image and `requirements.lock` for the

@@ -162,10 +162,17 @@ class VoiceAwareKong(Regress_onset_offset_frame_velocity_CRNN):
 
 
 def load_pretrained(model: nn.Module, path: str | Path) -> dict:
-    """Loads Kong's released note_model weights; only the voice head is left randomly initialised."""
-    checkpoint = torch.load(path, map_location="cpu")
-    prefix = "note_model."
-    state = {k[len(prefix) :]: v for k, v in checkpoint["model"].items() if k.startswith(prefix)}
+    """Loads Kong's released note_model weights; only the voice head is left randomly initialised.
+
+    # ENGINEERING CHOICE: Kong's released checkpoint stores checkpoint["model"] as a dict of
+    # two already-flat sub-state-dicts, {"note_model": {...}, "pedal_model": {...}} -- not a
+    # single flat dict with "note_model."-prefixed keys. Read the sub-dict directly rather
+    # than string-prefix-filtering a flat dict (which silently matches nothing against the
+    # real checkpoint); this is just reading the checkpoint's actual shape correctly, not a
+    # reproduction change.
+    """
+    checkpoint = torch.load(path, map_location="cpu", weights_only=False)
+    state = checkpoint["model"]["note_model"]
     result = model.load_state_dict(state, strict=False)
 
     missing = set(result.missing_keys)

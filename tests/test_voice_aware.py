@@ -32,7 +32,9 @@ def test_load_pretrained_only_voice_head_missing(tmp_path):
 
     plain = Regress_onset_offset_frame_velocity_CRNN(FRAMES_PER_SECOND, CLASSES_NUM)
     checkpoint_path = tmp_path / "fake.pth"
-    torch.save({"model": {f"note_model.{k}": v for k, v in plain.state_dict().items()}}, checkpoint_path)
+    # Kong's real checkpoint nests an already-flat sub-state-dict under "note_model", alongside
+    # a sibling "pedal_model" entry we don't use -- not a single dict with "note_model."-prefixed keys.
+    torch.save({"model": {"note_model": plain.state_dict(), "pedal_model": {}}}, checkpoint_path)
 
     model = _model()
     result = load_pretrained(model, checkpoint_path)
