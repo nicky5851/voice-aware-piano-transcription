@@ -33,7 +33,23 @@ CREPE per the decision procedure in `docs/protocol.md` §6.1.
   runs removed, quiet frames forced unvoiced).
 - **Validation**: a CREPE cross-check on 10 seeded songs and a 3-song
   pitch-sanity plot (`results/figures/pitch_check_*.png`) gate this choice;
-  see `results/gates/WP1.md` once WP1 completes.
+  see `results/gates/WP1.md`.
+
+## Known limitations (data card)
+
+- **RMVPE octave errors on "Giselle - Moss".** The pitch-sanity plot for
+  this song (`results/figures/pitch_check_train_Giselle - Moss.png`) shows
+  RMVPE's estimate jumping to the wrong octave on some voiced frames,
+  rather than an unvoiced or near-miss error. The CREPE cross-check still
+  passed its gate overall (mean agreement 0.906, mean voicing kappa 0.707,
+  threshold 0.85 on agreement), so this is accepted as a known label-noise
+  limitation of the automatic pitch labels rather than a reason to change
+  the label source: the auxiliary target for affected frames is simply
+  wrong by an octave, which this project has no way to detect or correct
+  without manual annotation. It is reported here rather than silently
+  present only in a figure, so the report's limitations section (protocol
+  §3.5, "the pitch labels come from a model, not from human annotation")
+  can point to a concrete example.
 
 ## Environment
 
