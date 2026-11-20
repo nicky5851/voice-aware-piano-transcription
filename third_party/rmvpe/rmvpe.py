@@ -8,7 +8,8 @@ import torch.nn.functional as F
 from librosa.util import normalize, pad_center, tiny
 from scipy.signal import get_window
 
-from tools.cuda_graph import run_cuda_graph
+# VAPT CHANGE: `from tools.cuda_graph import run_cuda_graph` removed here --
+# see the NOTICE and the two call sites below.
 
 import logging
 
@@ -487,21 +488,16 @@ class RMVPE:
         self.resample_kernel = {}
         if isinstance(is_half, str):
             is_half = is_half.lower() == "true"
+        # VAPT CHANGE: upstream resolves an unset/cuda device through the
+        # webui's configs.config (infer_device/infer_dtype, a hardware-SM
+        # dtype heuristic), not vendored here. This project always passes
+        # device and is_half explicitly (see src/vapt/data/rmvpe_infer.py),
+        # so both branches are replaced with that explicit choice: no
+        # automatic device pick, no automatic dtype override by SM.
         if device is None:
-            from configs.config import infer_device, infer_dtype
-
-            device = str(infer_device)
-            is_half = infer_dtype == torch.float16
-        elif str(device).startswith("cuda"):
-            from configs.config import get_device_dtype_sm
-
-            parsed_device = torch.device(device)
-            device_index = parsed_device.index
-            if device_index is None:
-                device_index = torch.cuda.current_device()
-            selected_device, selected_dtype, _, _ = get_device_dtype_sm(device_index)
-            device = str(selected_device)
-            is_half = selected_dtype == torch.float16
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        elif str(device).startswith("cuda") or str(device) == "cpu":
+            pass
         else:
             is_half = False
         self.is_half = is_half
@@ -553,12 +549,11 @@ class RMVPE:
                 )[0]
             else:
                 mel = mel.half() if self.is_half else mel.float()
-                hidden = run_cuda_graph(
-                    self.model,
-                    "rmvpe-network",
-                    lambda input_mel: self.model(input_mel),
-                    mel,
-                )
+                # VAPT CHANGE: upstream wraps this in run_cuda_graph() (from
+                # the webui's tools.cuda_graph, not vendored here) purely for
+                # CUDA-graph-capture caching across repeated calls; the
+                # computation is the lambda itself, called directly here.
+                hidden = self.model(mel)
             return hidden[:, :n_frames]
 
     def extract_mel(self, audio, center=True):
@@ -569,12 +564,8 @@ class RMVPE:
             audio = audio.unsqueeze(0)
         if "privateuseone" in str(self.device):
             return self.mel_extractor(audio, center=center)
-        return run_cuda_graph(
-            self.mel_extractor,
-            "rmvpe-mel-center-%s" % int(bool(center)),
-            lambda input_audio: self.mel_extractor(input_audio, center=center),
-            audio,
-        )
+        # VAPT CHANGE: see note above -- run_cuda_graph() dropped, same reason.
+        return self.mel_extractor(audio, center=center)
 
     def decode(self, hidden, thred=0.03):
         cents_pred = self.to_local_average_cents(hidden, thred=thred)

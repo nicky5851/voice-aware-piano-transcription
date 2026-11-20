@@ -24,4 +24,25 @@ sha256 and the exact HF commit pinned are recorded in docs/reproducibility.md
 once downloaded (the file has been replaced on that repo's main branch at
 least once historically, so the commit -- not just "main" -- is pinned).
 
-This commit is the file exactly as vendored, unmodified.
+Modifications
+-------------
+Two changes, in a commit separate from the unmodified vendoring commit, both
+removing a dependency on the rest of the RVC webui (which this project does
+not vendor):
+
+1. `tools.cuda_graph.run_cuda_graph` is called at two sites purely to cache
+   repeated inference calls via CUDA-graph capture; both are replaced with a
+   direct call to the exact function the removed wrapper was passed
+   (`self.model(mel)` and `self.mel_extractor(audio, center=center)`
+   respectively). This changes nothing about the computation.
+2. `RMVPE.__init__`'s device/dtype resolution imported `configs.config`
+   (the webui's own infer-device and SM-based half-precision heuristic) to
+   resolve an unset device or to override an explicit `cuda` device's
+   dtype. This project always passes `device` and `is_half` explicitly from
+   `src/vapt/data/rmvpe_infer.py`, so both branches were replaced with that
+   explicit choice (an unset device picks cuda-if-available else cpu; an
+   explicit device/dtype is used as given, with no SM-based override).
+
+See the `VAPT CHANGE` comments in rmvpe.py at each site.
+
+No other content of this file was modified.
