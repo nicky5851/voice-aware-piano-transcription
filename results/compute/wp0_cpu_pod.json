@@ -1,0 +1,23 @@
+{
+  "gpu": {
+    "name": null,
+    "count": 0,
+    "memory_gb": null,
+    "driver": null
+  },
+  "cpu": {
+    "count": 4,
+    "model": "AMD EPYC 9655 96-Core Processor"
+  },
+  "ram_gb": 8.0,
+  "disk_free_gb": 341809.2,
+  "image_digest": null,
+  "runpod_pod_id": "a8s8zw5ce5gk6k",
+  "runpod_gpu_type_id": null,
+  "git_sha": "ac1b7c4e383dddc03abb3964c8e2560d18df0d35",
+  "cuda_version": null,
+  "cudnn_version": null,
+  "torch_version": null,
+  "tf32_matmul": null,
+  "tf32_cudnn": null
+}
