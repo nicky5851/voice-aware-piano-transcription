@@ -27,7 +27,7 @@ dependencies = [
 dev = ["pytest"]
 
 [tool.pytest.ini_options]
-markers = ["gpu: requires a CUDA GPU"]
+markers = ["gpu: requires a CUDA GPU", "slow: CI-coverage-style test, excluded from the default run"]
 testpaths = ["tests"]
 
 [build-system]
