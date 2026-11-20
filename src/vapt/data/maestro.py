@@ -83,3 +83,23 @@ def pack_maestro_parallel(dataset_dir: Path, workspace: Path, num_workers: int =
     for row in rows:
         counts[row["split"]] = counts.get(row["split"], 0) + 1
     return counts
+
+
+class MaestroPackingTruncatedError(Exception):
+    """Raised when fewer HDF5 files exist than the CSV's row count, e.g. a quota or worker crash."""
+
+
+def verify_maestro_file_count(counts: dict[str, int], hdf5_dir: Path) -> int:
+    """Hard assertion that packing produced one HDF5 file per CSV row (CLAUDE.md WP1 follow-up, 2026-11-20).
+
+    pack_maestro_parallel's first run silently stopped partway through a quota limit (WP1 report:
+    108 files missing, recovered only because counts were checked by hand); this makes that failure
+    mode fail loudly instead, by comparing the CSV's row count against the files actually on disk.
+    """
+    expected = sum(counts.values())
+    n_files = len(list(hdf5_dir.rglob("*.h5")))
+    if n_files != expected:
+        raise MaestroPackingTruncatedError(
+            f"expected {expected} HDF5 files (from the CSV row count) but found {n_files} under {hdf5_dir}"
+        )
+    return n_files

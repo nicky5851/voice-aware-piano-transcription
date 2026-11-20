@@ -1,6 +1,8 @@
 import csv
 
-from vapt.data.maestro import read_maestro_rows
+import pytest
+
+from vapt.data.maestro import MaestroPackingTruncatedError, read_maestro_rows, verify_maestro_file_count
 
 
 def test_read_maestro_rows(tmp_path):
@@ -35,3 +37,19 @@ def test_read_maestro_rows(tmp_path):
     assert len(parsed) == 2
     assert parsed[0]["split"] == "train"
     assert parsed[1]["canonical_composer"] == "Chopin"
+
+
+def test_verify_maestro_file_count_passes_when_complete(tmp_path):
+    hdf5_dir = tmp_path / "hdf5s"
+    (hdf5_dir / "2018").mkdir(parents=True)
+    (hdf5_dir / "2018" / "a.h5").touch()
+    (hdf5_dir / "2018" / "b.h5").touch()
+    assert verify_maestro_file_count({"train": 1, "validation": 1}, hdf5_dir) == 2
+
+
+def test_verify_maestro_file_count_fails_loudly_when_truncated(tmp_path):
+    hdf5_dir = tmp_path / "hdf5s"
+    (hdf5_dir / "2018").mkdir(parents=True)
+    (hdf5_dir / "2018" / "a.h5").touch()  # only 1 of 2 expected files, e.g. a quota cut packing short
+    with pytest.raises(MaestroPackingTruncatedError):
+        verify_maestro_file_count({"train": 1, "validation": 1}, hdf5_dir)

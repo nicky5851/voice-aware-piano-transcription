@@ -19,7 +19,11 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from vapt.data.checksums import sha256_file, write_checksums  # noqa: E402
-from vapt.data.maestro import pack_maestro_parallel  # noqa: E402
+from vapt.data.maestro import (  # noqa: E402
+    MaestroPackingTruncatedError,
+    pack_maestro_parallel,
+    verify_maestro_file_count,
+)
 from vapt.data.musdb import musdb_split  # noqa: E402
 from vapt.data.pitch import postprocess_voicing, save_pitch  # noqa: E402
 from vapt.data.windows import voiced_windows  # noqa: E402
@@ -105,9 +109,18 @@ def cmd_maestro(args: argparse.Namespace, cfg: dict) -> None:
     report_path.write_text(json.dumps({"counts": counts, "elapsed_s": elapsed}, indent=2))
 
     hdf5_dir = workspace / "hdf5s" / "maestro"
+    try:
+        n_verified = verify_maestro_file_count(counts, hdf5_dir)
+    except MaestroPackingTruncatedError as exc:
+        print(
+            f"FATAL: {exc} -- packing was truncated (e.g. a quota or a worker crash); fix the cause "
+            "and re-run rather than proceeding with a partial dataset",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     files = sorted(hdf5_dir.rglob("*.h5"))
     write_checksums(workspace, files, workspace / "checksums" / "maestro_hdf5.sha256")
-    print(f"wrote checksums for {len(files)} HDF5 files")
+    print(f"wrote checksums for {len(files)} HDF5 files ({n_verified}/{sum(counts.values())} expected, verified)")
 
 
 def cmd_musdb_split(args: argparse.Namespace, cfg: dict) -> None:
