@@ -1,0 +1,39 @@
+{
+  "config": "configs/train/lambda1_seed0.yaml",
+  "precision": "fp32_strict",
+  "steps": 250,
+  "warmup": 50,
+  "fits_batch_12": true,
+  "oom_reason": null,
+  "s_per_step_mean": 1.107734143257141,
+  "data_wait_s_mean": 0.06234044551849365,
+  "data_wait_frac": 0.05627744337209836,
+  "peak_memory_mb": 27353.965056,
+  "total_memory_mb": 85094.825984,
+  "vram_headroom_frac": 0.6785472590173315,
+  "local_disk_sufficient": true,
+  "disk_free_gb": 293286.7,
+  "hardware": {
+    "gpu": {
+      "name": "NVIDIA A100 80GB PCIe",
+      "count": 1,
+      "memory_gb": 85.1,
+      "driver": "595.112.07"
+    },
+    "cpu": {
+      "count": 128,
+      "model": "AMD EPYC 9374F 32-Core Processor"
+    },
+    "ram_gb": 1585.0,
+    "disk_free_gb": 293286.7,
+    "image_digest": null,
+    "runpod_pod_id": null,
+    "runpod_gpu_type_id": null,
+    "git_sha": "80566a6945316c1543e70b0e09b86340a73c95e5",
+    "cuda_version": "13.2",
+    "cudnn_version": 92600,
+    "torch_version": "2.15.0+cu132",
+    "tf32_matmul": false,
+    "tf32_cudnn": false
+  }
+}

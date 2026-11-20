@@ -22,7 +22,13 @@ LOCAL_DISK_MIN_GB = 50.0  # training cache headroom; engineering judgement, not 
 
 
 def run_benchmark(
-    config_path: Path, workspace: Path, precision: str, steps: int, warmup: int, device: torch.device
+    config_path: Path,
+    workspace: Path,
+    precision: str,
+    steps: int,
+    warmup: int,
+    device: torch.device,
+    num_workers: int | None = None,
 ) -> dict:
     cfg = load_config(config_path)
     seed_everything(cfg.seed)
@@ -33,7 +39,8 @@ def run_benchmark(
         model.parameters(), lr=cfg.optimizer["lr"], betas=tuple(cfg.optimizer["betas"]),
         eps=cfg.optimizer["eps"], weight_decay=cfg.optimizer["weight_decay"],
     )
-    _, loader = build_loader(cfg, workspace, start_step=0, num_workers=cfg.hardware.get("num_workers", 0))
+    effective_workers = num_workers if num_workers is not None else cfg.hardware.get("num_workers", 0)
+    _, loader = build_loader(cfg, workspace, start_step=0, num_workers=effective_workers)
     loader_iter = iter(loader)
     pos_weight = cfg.voice_loss["pos_weight"]
 
@@ -107,10 +114,14 @@ def main() -> None:
     parser.add_argument("--steps", type=int, default=250)
     parser.add_argument("--warmup", type=int, default=50)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
+    parser.add_argument("--num-workers", type=int, default=None)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
 
-    result = run_benchmark(args.config, args.workspace, args.precision, args.steps, args.warmup, torch.device(args.device))
+    result = run_benchmark(
+        args.config, args.workspace, args.precision, args.steps, args.warmup,
+        torch.device(args.device), num_workers=args.num_workers,
+    )
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(result, indent=2))
     print(json.dumps({k: v for k, v in result.items() if k != "hardware"}, indent=2))
