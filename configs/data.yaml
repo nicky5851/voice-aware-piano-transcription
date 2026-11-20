@@ -1,0 +1,34 @@
+maestro:
+  dataset_dir: /workspace/vapt/data/maestro-v2.0.0
+  csv_name: maestro-v2.0.0.csv
+  archive_sha256: null  # filled in by prepare_data.py after download; recorded in the data report
+  num_workers: 8
+
+musdb:
+  dataset_dir: /workspace/vapt/data/musdb18hq
+  archive_md5: "12d4f2ecd55245a4688754dd76363103"  # required by protocol, spec WP1 §2
+  n_train_official: 100
+  n_test_official: 50
+  n_val: 10
+  split_seed: 0
+
+pitch:
+  hop_s: 0.01
+  min_run_frames: 5
+  floor_dbfs: -60.0
+  crepe_check:
+    n_songs: 10
+    seed: 0
+    agreement_cents: 50
+  sanity_check:
+    n_songs: 3
+    excerpt_s: 20
+    min_agreement_frac: 0.85
+
+windows:
+  win_10s: 10.0
+  win_30s: 30.0
+  hop_s: 1.0
+  min_voiced_frac: 0.5
+
+workspace: /workspace/vapt/work
