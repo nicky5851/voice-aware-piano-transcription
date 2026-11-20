@@ -109,7 +109,11 @@ def _load_model(checkpoint_path: Path, system: str, device: str) -> VoiceAwareKo
     if system == "pretrained":
         load_pretrained(model, checkpoint_path)  # voice head left randomly initialised, and ignored downstream
     else:
-        state = torch.load(checkpoint_path, map_location=device)
+        # weights_only=False: our own training checkpoints carry RNG state objects
+        # alongside the model weights, which torch's default (weights_only=True since
+        # torch 2.6) refuses to unpickle. They are produced by this same codebase, not
+        # an untrusted download.
+        state = torch.load(checkpoint_path, map_location=device, weights_only=False)
         model.load_state_dict(state["model"] if "model" in state else state)
     return model
 

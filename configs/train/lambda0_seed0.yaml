@@ -1,0 +1,18 @@
+run_name: lam0_s0
+seed: 0
+lam: 0.0
+steps: 40000
+batch_size: 12
+optimizer: {name: adam, lr: 1.0e-4, betas: [0.9, 0.999], eps: 1.0e-8, weight_decay: 0}
+lr_decay: {every: 5000, factor: 0.9}
+voice_loss: {pos_weight: 1.0}
+data: {segment_s: 10.0, vpr_range_db: [-9, 9], p_clean: 0.2}
+validation: {every: 2000, manifest: manifests/val_manifest.json}
+checkpoint: {every: 2000, keep_last: 2}
+diagnostics: {every: 1000, fixed_batch_seed: 9999}
+hardware:
+  precision: fp32_strict
+  num_workers: 8
+  prefetch_factor: 4
+  pin_memory: true
+  cache_dir: /root/cache
