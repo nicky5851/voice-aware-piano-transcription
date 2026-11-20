@@ -25,6 +25,17 @@ def _track(n_frames: int, voiced_slice: slice, midi_pitch: int) -> PitchTrack:
     return PitchTrack(f0_hz=f0, salience=np.ones(n_frames, dtype=np.float32), voiced=voiced, source="test")
 
 
+def test_degenerate_zero_duration_estimated_note_is_dropped_not_crashed():
+    ref = _notes((60, 1.0, 1.5))
+    # the postprocessor occasionally emits a note whose offset frame is at or before its onset
+    # frame (noisy regression output); mir_eval rejects the whole clip if such an interval reaches
+    # it, so it must be dropped before scoring rather than raising.
+    est = _notes((60, 1.0, 1.5), (72, 2.0, 2.0), (90, 5.5, 5.0))
+    scores = score_clip(ref, est, None, dur_s=10.0)
+    assert scores.n_est == 1
+    assert abs(scores.onset_f1 - 100.0) < 1e-6
+
+
 def test_two_false_positives_one_leaked():
     ref = _notes((60, 1.0, 1.5))
     # 72 matches ref; 65 and 90 are both false positives.

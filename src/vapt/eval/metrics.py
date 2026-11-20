@@ -57,6 +57,13 @@ def _is_leak(voiced: np.ndarray, m_round: np.ndarray, onset_s: float, midi_pitch
 def score_clip(
     ref_notes: list[dict], est_notes: list[dict], voice_track_window: PitchTrack | None, dur_s: float
 ) -> ClipScores:
+    # ENGINEERING CHOICE: an under-trained or noisy model can have the postprocessor emit a note
+    # whose offset frame is at or before its onset frame (zero or negative duration). mir_eval
+    # rejects the whole clip outright if even one estimated interval is non-positive, which would
+    # crash validation mid-training rather than just scoring that one note as unmatched. Drop such
+    # notes before scoring -- this only affects clearly-degenerate postprocessor output, never the
+    # reference notes (ground-truth isolation is untouched) and never a well-formed estimated note.
+    est_notes = [n for n in est_notes if n["offset_time"] > n["onset_time"]]
     n_ref, n_est = len(ref_notes), len(est_notes)
     ref_i, ref_p = _intervals_pitches_hz(ref_notes)
     est_i, est_p = _intervals_pitches_hz(est_notes)
