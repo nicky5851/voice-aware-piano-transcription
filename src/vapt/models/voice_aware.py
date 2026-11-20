@@ -28,11 +28,47 @@ def _ensure_vendored_on_path() -> None:
 
 
 _ensure_vendored_on_path()
-from models import (  # noqa: E402  (vendored, unmodified)
+from models import (  # noqa: E402  (vendored, see the monkeypatch below)
     AcousticModelCRnn8Dropout,
     Regress_onset_offset_frame_velocity_CRNN,
     init_layer,
 )
+
+
+def _acoustic_model_forward_inplace_false(self: AcousticModelCRnn8Dropout, input: Tensor) -> Tensor:
+    """Same body as the vendored AcousticModelCRnn8Dropout.forward, with the one
+    inplace=True dropout changed to inplace=False.
+
+    # ENGINEERING CHOICE: that inplace dropout overwrites the preceding ReLU's
+    # output tensor, which newer PyTorch's autograd saves for its own backward;
+    # under today's torch this raises "modified by an inplace operation" as soon
+    # as gradients are requested (every training step, not just ours -- the
+    # vendored class's own frame/onset sub-networks would hit it too). It never
+    # fired in Kong's original eval-only inference path, only once a network
+    # using this class is actually trained. inplace vs not-inplace does not
+    # change dropout's sampled mask or any numerical output, only memory reuse,
+    # so this is a PyTorch-version compatibility fix, not a reproduction change.
+    """
+    x = self.conv_block1(input, pool_size=(1, 2), pool_type="avg")
+    x = F.dropout(x, p=0.2, training=self.training)
+    x = self.conv_block2(x, pool_size=(1, 2), pool_type="avg")
+    x = F.dropout(x, p=0.2, training=self.training)
+    x = self.conv_block3(x, pool_size=(1, 2), pool_type="avg")
+    x = F.dropout(x, p=0.2, training=self.training)
+    x = self.conv_block4(x, pool_size=(1, 2), pool_type="avg")
+    x = F.dropout(x, p=0.2, training=self.training)
+
+    x = x.transpose(1, 2).flatten(2)
+    x = F.relu(self.bn5(self.fc5(x).transpose(1, 2)).transpose(1, 2))
+    x = F.dropout(x, p=0.5, training=self.training, inplace=False)
+
+    (x, _) = self.gru(x)
+    x = F.dropout(x, p=0.5, training=self.training, inplace=False)
+    output = torch.sigmoid(self.fc(x))
+    return output
+
+
+AcousticModelCRnn8Dropout.forward = _acoustic_model_forward_inplace_false
 
 
 class AcousticModelWithFeatures(AcousticModelCRnn8Dropout):
@@ -55,7 +91,7 @@ class AcousticModelWithFeatures(AcousticModelCRnn8Dropout):
 
         x = x.transpose(1, 2).flatten(2)
         x = F.relu(self.bn5(self.fc5(x).transpose(1, 2)).transpose(1, 2))
-        x = F.dropout(x, p=0.5, training=self.training, inplace=True)
+        x = F.dropout(x, p=0.5, training=self.training, inplace=False)  # see _acoustic_model_forward_inplace_false above
 
         (x, _) = self.gru(x)
         features = x  # [B, T, 512], before the final dropout and fc

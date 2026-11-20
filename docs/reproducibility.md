@@ -51,6 +51,22 @@ CREPE per the decision procedure in `docs/protocol.md` §6.1.
   §3.5, "the pitch labels come from a model, not from human annotation")
   can point to a concrete example.
 
+- **An in-place dropout in Kong's vendored `AcousticModelCRnn8Dropout.forward`
+  (and the copy used for the frame/onset sub-networks) is patched to be
+  out-of-place for training.** The original overwrites the preceding ReLU's
+  output in place; current PyTorch's autograd saves that exact tensor for its
+  own backward pass, so calling `.backward()` on any loss that runs through
+  this sub-network in training mode raises "modified by an inplace
+  operation." This never surfaced in Kong's own released inference code
+  (eval mode never executes dropout, in place or not), only once the network
+  is trained. Switching that one call from `inplace=True` to `inplace=False`
+  changes no numerical output -- dropout's sampled mask and result are
+  identical either way, only memory reuse differs -- so it does not affect
+  the exact-reproduction or piano-path-unchanged checks (both run in eval
+  mode). See `src/vapt/models/voice_aware.py`'s
+  `_acoustic_model_forward_inplace_false` monkeypatch and the corresponding
+  change in `AcousticModelWithFeatures.forward`.
+
 ## Environment
 
 See `docs/compute.md` for the base image and `requirements.lock` for the
