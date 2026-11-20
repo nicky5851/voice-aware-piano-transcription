@@ -1,0 +1,39 @@
+{
+  "maestro": {
+    "counts": {
+      "train": 967,
+      "validation": 137,
+      "test": 178
+    },
+    "packing_elapsed_s": 184.05947732925415,
+    "hdf5_files": 1282,
+    "missing_files_found_and_recovered": 108,
+    "note": "first extraction attempt hit the network volume quota mid-extraction (year 2004 cut short); volume resized 300->350GB and MAESTRO re-downloaded+re-extracted cleanly; all 1282 rows verified present before packing"
+  },
+  "musdb_split": {
+    "train": 90,
+    "val": 10,
+    "test": 50
+  },
+  "musdb_vocals": {
+    "n_stems": 150
+  },
+  "pitch_label_source": "rmvpe",
+  "rmvpe_checkpoint": {
+    "hf_repo": "lj1995/VoiceConversionWebUI",
+    "commit": "e6d0c1a17da07c33557852f9dfa2bd44cc75737d",
+    "sha256": "6d62215f4306e3ca278246188607209f09af3dc77ed4232efdd069798c4ec193"
+  },
+  "crepe_cross_check": {
+    "n_songs": 10,
+    "mean_agreement": 0.905591500750595,
+    "mean_voicing_kappa": 0.7067070880459566,
+    "gate_threshold": 0.85,
+    "gate_passed": true
+  },
+  "pitch_sanity_plot_songs": [
+    "Matthew Entwistle - Dont You Ever",
+    "Giselle - Moss",
+    "The Long Wait - Back Home To Blue"
+  ]
+}

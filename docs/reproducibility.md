@@ -17,9 +17,10 @@ CREPE per the decision procedure in `docs/protocol.md` §6.1.
   https://huggingface.co/lj1995/VoiceConversionWebUI . License: MIT (per
   that repository's license tag). This file has been replaced on that
   repository's main branch at least once historically, so the exact commit
-  is pinned here, not just "main": sha256 and the pinned HF commit are
-  recorded once the checkpoint is downloaded and verified (see the pitch
-  label report, `results/data/wp1_data_report.json`).
+  is pinned here, not just "main": commit `e6d0c1a17da07c33557852f9dfa2bd44cc75737d`,
+  sha256 `6d62215f4306e3ca278246188607209f09af3dc77ed4232efdd069798c4ec193`
+  (181184272 bytes), verified against the file downloaded at that commit on
+  2026-11-20.
 - **Configuration**: 16kHz audio, hop 160 samples (10ms), as the vendored
   code's own `MelSpectrogram` construction uses -- not the original RMVPE
   paper's own training configuration (20ms hop), which belongs to a

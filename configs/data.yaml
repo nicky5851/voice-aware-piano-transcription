@@ -22,6 +22,7 @@ pitch:
     agreement_cents: 50
   sanity_check:
     n_songs: 3
+    seed: 0
     excerpt_s: 20
     min_agreement_frac: 0.85
 
