@@ -56,6 +56,16 @@ def _cpu_info() -> dict[str, Any]:
 
 
 def _ram_gb() -> float | None:
+    # /proc/meminfo reports the host's total RAM, not a container's
+    # cgroup-limited allocation (seen on RunPod pods); cgroup v2's
+    # memory.max does, when the container actually has a limit set.
+    try:
+        with open("/sys/fs/cgroup/memory.max") as f:
+            limit = f.read().strip()
+        if limit != "max":
+            return round(int(limit) / 1e9, 1)
+    except (OSError, ValueError):
+        pass
     try:
         with open("/proc/meminfo") as f:
             for line in f:
