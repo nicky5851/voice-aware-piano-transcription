@@ -26,8 +26,8 @@ from vapt.data.windows import voiced_windows  # noqa: E402
 from vapt.infra.hardware import record_hardware  # noqa: E402
 
 MAESTRO_URL = "https://storage.googleapis.com/magentadata/datasets/maestro/v2.0.0/maestro-v2.0.0.zip"
+MUSDB_URL = "https://zenodo.org/api/records/3338373/files/musdb18hq.zip/content"
 MUSDB_MD5 = "12d4f2ecd55245a4688754dd76363103"
-MUSDB_ZENODO_RECORD = "3338373"
 
 
 def _log_header(name: str, config: dict) -> None:
@@ -76,13 +76,7 @@ def cmd_download_musdb(args: argparse.Namespace, cfg: dict) -> None:
     dataset_dir = Path(cfg["musdb"]["dataset_dir"])
     zip_path = dataset_dir.parent / "musdb18hq.zip"
     if not zip_path.exists():
-        print(
-            f"FATAL: {zip_path} not found. MUSDB18-HQ (Zenodo record "
-            f"{MUSDB_ZENODO_RECORD}) requires a browser/Zenodo-token download; "
-            "place musdb18hq.zip there and re-run.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+        _download(MUSDB_URL, zip_path)
     digest = _md5_file(zip_path)
     expected = cfg["musdb"]["archive_md5"]
     if digest != expected:
