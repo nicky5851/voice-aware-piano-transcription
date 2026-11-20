@@ -28,10 +28,66 @@ SEGMENT_S = 10.0
 SEGMENT_SAMPLES = int(SEGMENT_S * SAMPLE_RATE)
 
 
+_patched_empty_notes = False
+
+
+def _patch_empty_detected_notes() -> None:
+    """Monkeypatch RegressionPostProcessor.output_dict_to_detected_notes (vendored, unmodified
+    on disk) for one upstream bug, without editing the vendored file.
+
+    # ENGINEERING CHOICE: when zero onsets are detected for every pitch class across a whole
+    # clip -- routine during early-training validation of an under-trained model, never seen
+    # with Kong's own well-trained released checkpoint -- `np.array([])` collapses to shape
+    # (0,) instead of (notes, 5), and `est_tuples[:, 0]` raises IndexError. Kong's own sibling
+    # method for pedals (output_dict_to_detected_pedals, same file) already guards this exact
+    # case with `if len(est_tuples) == 0: return np.array([])`; the notes method is missing the
+    # equivalent guard. This patch adds it, matching that established pattern. It changes no
+    # output whenever at least one note is detected (the overwhelming majority of real calls).
+    """
+    global _patched_empty_notes
+    if _patched_empty_notes:
+        return
+    from utilities import RegressionPostProcessor
+
+    def _output_dict_to_detected_notes(self, output_dict):
+        est_tuples = []
+        est_midi_notes = []
+        classes_num = output_dict["frame_output"].shape[-1]
+        from utilities import note_detection_with_onset_offset_regress
+
+        for piano_note in range(classes_num):
+            est_tuples_per_note = note_detection_with_onset_offset_regress(
+                frame_output=output_dict["frame_output"][:, piano_note],
+                onset_output=output_dict["onset_output"][:, piano_note],
+                onset_shift_output=output_dict["onset_shift_output"][:, piano_note],
+                offset_output=output_dict["offset_output"][:, piano_note],
+                offset_shift_output=output_dict["offset_shift_output"][:, piano_note],
+                velocity_output=output_dict["velocity_output"][:, piano_note],
+                frame_threshold=self.frame_threshold,
+            )
+            est_tuples += est_tuples_per_note
+            est_midi_notes += [piano_note + self.begin_note] * len(est_tuples_per_note)
+
+        if not est_tuples:
+            return np.zeros((0, 4), dtype=np.float32)
+
+        est_tuples = np.array(est_tuples)  # (notes, 5)
+        est_midi_notes = np.array(est_midi_notes)  # (notes,)
+        onset_times = (est_tuples[:, 0] + est_tuples[:, 2]) / self.frames_per_second
+        offset_times = (est_tuples[:, 1] + est_tuples[:, 3]) / self.frames_per_second
+        velocities = est_tuples[:, 4]
+        est_on_off_note_vels = np.stack((onset_times, offset_times, est_midi_notes, velocities), axis=-1)
+        return est_on_off_note_vels.astype(np.float32)
+
+    RegressionPostProcessor.output_dict_to_detected_notes = _output_dict_to_detected_notes
+    _patched_empty_notes = True
+
+
 def _ensure_vendored_on_path() -> None:
     p = str(THIRD_PARTY_UTILS)
     if p not in sys.path:
         sys.path.insert(0, p)
+    _patch_empty_detected_notes()
 
 
 def enframe(x: np.ndarray, segment_samples: int) -> np.ndarray:

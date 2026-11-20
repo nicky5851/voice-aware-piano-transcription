@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from vapt.infer import deframe, enframe, transcribe
+from vapt.infer import _ensure_vendored_on_path, deframe, enframe, transcribe
 from vapt.models.voice_aware import VoiceAwareKong
 
 
@@ -46,6 +46,27 @@ def test_deframe_stitches_middle_quarters():
         axis=0,
     )
     assert np.array_equal(out, expected)
+
+
+def test_output_dict_to_detected_notes_handles_zero_detections():
+    """An under-trained model can have every pitch class stay below frame_threshold for a
+    whole clip (no onsets anywhere); the patched vendored method must return an empty (0, 4)
+    array rather than crashing on the 1-D-vs-2-D indexing bug in Kong's original."""
+    _ensure_vendored_on_path()
+    from utilities import RegressionPostProcessor
+
+    post_processor = RegressionPostProcessor(
+        frames_per_second=100, classes_num=88, onset_threshold=0.3, offset_threshold=0.3,
+        frame_threshold=0.1, pedal_offset_threshold=0.2,
+    )
+    t = 50
+    zeros = np.zeros((t, 88), dtype=np.float32)
+    output_dict = {
+        "frame_output": zeros, "onset_output": zeros, "onset_shift_output": zeros,
+        "offset_output": zeros, "offset_shift_output": zeros, "velocity_output": zeros,
+    }
+    result = post_processor.output_dict_to_detected_notes(output_dict)
+    assert result.shape == (0, 4)
 
 
 def test_transcribe_runs_on_random_audio_and_voice_roll_shape_matches_audio():

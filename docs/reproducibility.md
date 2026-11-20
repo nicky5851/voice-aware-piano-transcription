@@ -89,6 +89,16 @@ Kong et al.'s Zenodo release (record 4034264):
 
 See `tests/test_reproduction.py` (pytest marker `gpu`) for the exact checks.
 
+- **A missing empty-array guard in Kong's vendored
+  `RegressionPostProcessor.output_dict_to_detected_notes` is patched (without editing the
+  vendored file).** When zero onsets are detected for every pitch class across a whole clip --
+  routine during early-training validation of an under-trained model, never seen with Kong's
+  own well-trained released checkpoint -- `np.array([])` collapses to shape `(0,)` instead of
+  `(notes, 5)`, and the method's own indexing (`est_tuples[:, 0]`) raises `IndexError`. Kong's
+  own sibling method for pedals, in the same file, already guards this exact case; the notes
+  method is missing the equivalent guard. The patch adds it, changing no output whenever at
+  least one note is detected. See `src/vapt/infer.py`'s `_patch_empty_detected_notes`.
+
 ## Environment
 
 See `docs/compute.md` for the base image and `requirements.lock` for the
