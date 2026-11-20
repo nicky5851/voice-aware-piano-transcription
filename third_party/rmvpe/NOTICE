@@ -1,0 +1,27 @@
+Vendored pitch-tracking inference code for the voice-aware piano transcription project.
+
+Source
+------
+RVC-Project / Retrieval-based-Voice-Conversion-WebUI
+https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI
+File: infer/rmvpe.py
+Pinned commit: 81eed5e8f68b6bed1789f682fe78cdd324495afc
+License: MIT (see LICENSE in this directory, copied from the same commit)
+
+Underlying method: RMVPE, "A Robust Model for Vocal Pitch Estimation in
+Polyphonic Music" (Wei, Bai, Zhou, Wang; INTERSPEECH 2023, arXiv:2306.15412).
+The authors' own reference repository (github.com/Dream-High/RMVPE,
+Apache-2.0) was considered but not used: it trains its own checkpoint at a
+different mel/hop configuration, and the checkpoint we actually use (below)
+was trained inside the RVC pipeline this file belongs to. Vendoring the
+matching code avoids an architecture/checkpoint mismatch.
+
+Checkpoint
+----------
+rmvpe.pt, hosted at https://huggingface.co/lj1995/VoiceConversionWebUI
+License: MIT (per the Hugging Face repo's license tag)
+sha256 and the exact HF commit pinned are recorded in docs/reproducibility.md
+once downloaded (the file has been replaced on that repo's main branch at
+least once historically, so the commit -- not just "main" -- is pinned).
+
+This commit is the file exactly as vendored, unmodified.
