@@ -51,8 +51,14 @@ stop_pod() {
     return 0
   fi
   if [ -n "${RUNPOD_API_KEY:-}" ] && [ -n "${RUNPOD_POD_ID:-}" ]; then
-    curl -s -X POST "https://rest.runpod.io/v1/pods/${RUNPOD_POD_ID}/stop" \
-      -H "Authorization: Bearer ${RUNPOD_API_KEY}" >/dev/null
+    # rest.runpod.io does not resolve; the REST v2 host is api.runpod.io,
+    # and the action endpoint is POST /v2/pods/{id}/action with a JSON
+    # {"action": "stop"} body, not a /stop suffix (confirmed against the
+    # live v2 OpenAPI doc and a real stop call, 2026-11-20).
+    curl -s -X POST "https://api.runpod.io/v2/pods/${RUNPOD_POD_ID}/action" \
+      -H "Authorization: Bearer ${RUNPOD_API_KEY}" \
+      -H "Content-Type: application/json" \
+      -d '{"action":"stop"}' >/dev/null
     log "stop request sent for pod ${RUNPOD_POD_ID}"
   elif command -v runpodctl >/dev/null 2>&1 && [ -n "${RUNPOD_POD_ID:-}" ]; then
     runpodctl stop pod "${RUNPOD_POD_ID}"
